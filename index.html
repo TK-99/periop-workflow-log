@@ -745,11 +745,20 @@
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
+  function nowLocalStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
   function fmtDate(dateStr) {
     if (!dateStr) return 'Undated';
-    const d = new Date(dateStr + 'T00:00:00');
+    // supports both plain dates (YYYY-MM-DD) and datetime-local values (YYYY-MM-DDTHH:MM)
+    const hasTime = dateStr.length > 10;
+    const d = new Date(hasTime ? dateStr : dateStr + 'T00:00:00');
     if (isNaN(d)) return dateStr;
-    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    const opts = hasTime
+      ? { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }
+      : { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
+    return d.toLocaleDateString(undefined, opts);
   }
 
   const dailyPainCheckbox = document.getElementById('dl-step-pain');
@@ -787,7 +796,7 @@
   }
 
   function handleStartDailyLog() {
-    const date = document.getElementById('dl-date').value || todayStr();
+    const date = document.getElementById('dl-date').value || nowLocalStr();
     const label = document.getElementById('dl-label').value.trim();
     const logs = loadDailyLogs();
     const newLog = { id: uid(), date, label, steps: [] };
@@ -802,7 +811,7 @@
     const logs = loadDailyLogs();
     const active = logs.find(l => l.id === getActiveDailyId());
     if (!active) return;
-    const newDate = prompt('Date (YYYY-MM-DD):', active.date);
+    const newDate = prompt('Date & time (YYYY-MM-DDTHH:MM):', active.date);
     if (newDate === null) return;
     const newLabel = prompt('List / Case Type:', active.label || '');
     if (newLabel === null) return;
@@ -931,8 +940,8 @@
     if (!active) {
       card.innerHTML = `
         <h2>Start a Day Log</h2>
-        <label for="dl-date">Date</label>
-        <input type="date" id="dl-date" value="${todayStr()}">
+        <label for="dl-date">Date &amp; Time</label>
+        <input type="datetime-local" id="dl-date" value="${nowLocalStr()}">
         <label for="dl-label">List / Case Type</label>
         <input type="text" id="dl-label" placeholder="e.g. Elective General AM List">
         <button class="btn btn-primary" id="btn-start-daily" type="button">Start Day Log</button>
@@ -1047,7 +1056,7 @@
 
   function buildDailyCsv() {
     const logs = [...loadDailyLogs()].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-    const header = ['Date', 'List / Case Type', 'Step Order', 'Step', 'System / Source', 'Pain Point', 'Pain Point Note'];
+    const header = ['Date/Time', 'List / Case Type', 'Step Order', 'Step', 'System / Source', 'Pain Point', 'Pain Point Note'];
     const rows = [];
     logs.forEach(l => {
       l.steps.forEach((s, i) => {
@@ -1082,6 +1091,7 @@
     });
   });
 
+  resetDailyStepForm();
   renderDailyTab();
 </script>
 </body>
