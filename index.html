@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Perioperative Workflow Log</title>
+<style>
+  :root {
+    color-scheme: light;
+    --teal: #0e7490;
+    --teal-dark: #155e75;
+    --teal-light: #ecfeff;
+    --amber: #b45309;
+    --amber-bg: #fffbeb;
+    --amber-border: #fde68a;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --danger: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding-bottom: 40px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
+
+  header.top {
+    background: linear-gradient(135deg, var(--teal-dark), var(--teal));
+    color: white;
+    padding: 20px 16px;
+    margin-bottom: 0;
+  }
+  header.top .wrap { padding: 0 16px; }
+  header.top h1 { margin: 0 0 4px; font-size: 20px; font-weight: 700; }
+  header.top p { margin: 0; font-size: 13px; opacity: 0.9; }
+
+  .phi-banner {
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-border);
+    color: var(--amber);
+    font-size: 12.5px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin: 16px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    line-height: 1.4;
+  }
+  .phi-banner strong { color: #92400e; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .card h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+    margin: 0 0 12px;
+  }
+
+  label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    margin-top: 12px;
+  }
+  label:first-of-type { margin-top: 0; }
+  select, input[type=text], textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text);
+    background: white;
+  }
+  textarea { resize: vertical; min-height: 54px; }
+  select:focus, input:focus, textarea:focus { outline: 2px solid var(--teal); outline-offset: -1px; }
+
+  .pain-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .pain-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--danger); }
+  .pain-row label { margin: 0; font-size: 14px; font-weight: 600; color: var(--text); }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .chip {
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text-muted);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .chip.active { background: var(--teal); color: white; border-color: var(--teal); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primary { background: var(--teal); color: white; width: 100%; margin-top: 16px; }
+  .btn-primary:active { background: var(--teal-dark); }
+  .btn-secondary { background: #f1f5f9; color: var(--text); }
+  .btn-danger { background: #fee2e2; color: var(--danger); }
+  .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-row { display: flex; gap: 8px; margin-top: 16px; }
+  .btn-row .btn { flex: 1; margin-top: 0; }
+  .btn-sm { padding: 6px 10px; font-size: 12.5px; }
+
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .stat-chip {
+    background: var(--teal-light);
+    color: var(--teal-dark);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .stat-chip.warn { background: #fee2e2; color: var(--danger); }
+
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+  .filter-bar select { flex: 1; }
+
+  .phase-group { margin-bottom: 10px; }
+  .phase-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 4px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .phase-header .name { font-weight: 700; font-size: 14px; color: var(--teal-dark); }
+  .phase-header .count { font-size: 12.5px; color: var(--text-muted); }
+  .phase-header .chevron { transition: transform 0.15s; color: var(--text-muted); font-size: 12px; }
+  .phase-header.collapsed .chevron { transform: rotate(-90deg); }
+
+  .entry {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--teal);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  .entry.pain { border-left-color: var(--danger); }
+  .entry .row1 { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .entry .step { font-size: 14.5px; font-weight: 600; margin: 0 0 4px; }
+  .entry .meta { font-size: 12.5px; color: var(--text-muted); margin: 2px 0; }
+  .entry .meta b { color: var(--text); font-weight: 600; }
+  .entry .pain-note { font-size: 12.5px; color: var(--danger); background: #fef2f2; padding: 6px 8px; border-radius: 6px; margin-top: 6px; }
+  .entry .actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .icon-btn {
+    background: none; border: none; cursor: pointer; padding: 4px 6px;
+    color: var(--text-muted); font-size: 15px; border-radius: 6px;
+  }
+  .icon-btn:active { background: #f1f5f9; }
+  .badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: #fee2e2;
+    color: var(--danger);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .empty { text-align: center; color: var(--text-muted); font-size: 13.5px; padding: 24px 12px; }
+
+  dialog {
+    border: none;
+    border-radius: 12px;
+    padding: 0;
+    width: 92%;
+    max-width: 640px;
+  }
+  dialog::backdrop { background: rgba(15, 23, 42, 0.5); }
+  .dialog-inner { padding: 18px; }
+  .dialog-inner h3 { margin: 0 0 10px; font-size: 16px; }
+  .dialog-inner textarea { width: 100%; min-height: 200px; font-family: ui-monospace, monospace; font-size: 12px; }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 50;
+  }
+  .toast.show { opacity: 1; }
+
+  footer.danger-zone { margin-top: 24px; text-align: center; }
+  footer.danger-zone button { background: none; border: none; color: var(--text-muted); font-size: 12px; text-decoration: underline; cursor: pointer; }
+
+  .tab-nav { display: flex; gap: 8px; padding: 12px 16px 0; max-width: 720px; margin: 0 auto; }
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: white;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .tab-btn.active { background: var(--teal); color: white; border-color: var(--teal); }
+
+  .log-card-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; gap: 8px; }
+  .log-card-header .title { font-size: 14.5px; font-weight: 700; }
+  .log-summary { font-size: 12px; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+  .log-card-header .chevron { transition: transform 0.15s; color: var(--text-muted); font-size: 12px; flex-shrink: 0; }
+  .log-card-header.collapsed .chevron { transform: rotate(-90deg); }
+
+  .step-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--teal);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+  .step-row.pain { border-left-color: var(--danger); }
+  .step-num {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--teal-light);
+    color: var(--teal-dark);
+    font-size: 11.5px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+  .step-body { flex: 1; min-width: 0; }
+  .step-body .step-text { font-size: 14px; font-weight: 600; margin: 0 0 2px; }
+  .step-controls { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+  .step-controls .icon-btn { padding: 2px 5px; font-size: 13px; }
+  .step-controls-row { display: flex; gap: 2px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <h1>Perioperative Workflow Log</h1>
+    <p>Current-state (AS-IS) documentation &mdash; Anesthesiology &middot; pre-Epic transition</p>
+  </div>
+</header>
+
+<div class="tab-nav">
+  <button type="button" class="tab-btn active" data-tab="case">Case Steps</button>
+  <button type="button" class="tab-btn" data-tab="daily">Daily List Flow</button>
+</div>
+
+<div class="wrap" id="tab-case">
+  <div class="phi-banner">
+    <span>&#9888;&#65039;</span>
+    <span><strong>No patient-identifiable information.</strong> Log workflow steps and Epic screens/modules only &mdash; never names, MRNs, dates of birth, or case-identifying details.</span>
+  </div>
+
+  <div class="card">
+    <h2 id="form-title">Log an Entry</h2>
+    <label for="f-phase">Phase</label>
+    <select id="f-phase">
+      <option>Pre-op Assessment</option>
+      <option>Day-of-Surgery / Holding</option>
+      <option>Intraoperative</option>
+      <option>PACU Handoff</option>
+      <option>Post-op Rounding</option>
+      <option>Other</option>
+    </select>
+
+    <label for="f-casetype">Case Type <span style="font-weight:400; text-transform:none; letter-spacing:0;">(optional, e.g. "elective general")</span></label>
+    <input type="text" id="f-casetype" placeholder="e.g. Elective general surgery">
+
+    <label for="f-step">Step / Action</label>
+    <textarea id="f-step" placeholder="What did you do? e.g. Reviewed H&amp;P, entered ASA classification"></textarea>
+
+    <label for="f-screen">System / Tool Used</label>
+    <div class="chip-row" id="system-chips">
+      <button type="button" class="chip" data-val="Paper">Paper</button>
+      <button type="button" class="chip" data-val="Opal">Opal (BOSSnet)</button>
+      <button type="button" class="chip" data-val="webPAS">webPAS</button>
+      <button type="button" class="chip" data-val="Verbal">Verbal</button>
+    </div>
+    <input type="text" id="f-screen" placeholder="e.g. Paper chart, Opal, webPAS, verbal handover">
+
+    <label for="f-data">Data Captured <span style="font-weight:400; text-transform:none; letter-spacing:0;">(optional)</span></label>
+    <input type="text" id="f-data" placeholder="e.g. ASA class, anaesthesia plan, consent status">
+
+    <div class="pain-row">
+      <input type="checkbox" id="f-pain">
+      <label for="f-pain">Flag as pain point / workaround</label>
+    </div>
+    <div id="pain-note-wrap" style="display:none;">
+      <label for="f-painnote">Pain point note</label>
+      <textarea id="f-painnote" placeholder="What's the friction here?"></textarea>
+    </div>
+
+    <div class="btn-row" id="form-buttons">
+      <button class="btn btn-primary" id="btn-add" style="margin-top:0;">Add Entry</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Summary</h2>
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div class="filter-bar">
+    <select id="filter-phase">
+      <option value="">All Phases</option>
+      <option>Pre-op Assessment</option>
+      <option>Day-of-Surgery / Holding</option>
+      <option>Intraoperative</option>
+      <option>PACU Handoff</option>
+      <option>Post-op Rounding</option>
+      <option>Other</option>
+    </select>
+    <button class="btn btn-ghost btn-sm" id="btn-export">Export CSV</button>
+  </div>
+
+  <div id="entries-container"></div>
+
+  <footer class="danger-zone">
+    <button id="btn-clear">Clear all entries</button>
+  </footer>
+</div>
+
+<div class="wrap" id="tab-daily" style="display:none;">
+  <div class="phi-banner">
+    <span>&#9888;&#65039;</span>
+    <span><strong>No patient-identifiable information.</strong> Describe list/day-level steps only &mdash; e.g. how you find your list, where case order lives &mdash; never names, MRNs, or case-identifying details.</span>
+  </div>
+
+  <div class="card" id="daily-active-card"></div>
+
+  <div id="daily-entry-form" style="display:none;">
+    <div class="card">
+      <h2 id="daily-form-title">Add a Step</h2>
+      <label for="dl-step-text">Step</label>
+      <textarea id="dl-step-text" placeholder="e.g. Check email/roster for tomorrow's list assignment"></textarea>
+
+      <label for="dl-step-system">System / Source</label>
+      <div class="chip-row" id="daily-system-chips">
+        <button type="button" class="chip" data-val="Paper">Paper</button>
+        <button type="button" class="chip" data-val="Opal">Opal (BOSSnet)</button>
+        <button type="button" class="chip" data-val="webPAS">webPAS</button>
+        <button type="button" class="chip" data-val="Email">Email</button>
+        <button type="button" class="chip" data-val="Verbal">Verbal</button>
+      </div>
+      <input type="text" id="dl-step-system" placeholder="e.g. Email, webPAS, ward whiteboard, verbal">
+
+      <div class="pain-row">
+        <input type="checkbox" id="dl-step-pain">
+        <label for="dl-step-pain">Flag as pain point / workaround</label>
+      </div>
+      <div id="dl-pain-note-wrap" style="display:none;">
+        <label for="dl-step-painnote">Pain point note</label>
+        <textarea id="dl-step-painnote" placeholder="What's the friction here?"></textarea>
+      </div>
+
+      <div class="btn-row" id="daily-form-buttons">
+        <button class="btn btn-primary" id="btn-add-step" style="margin-top:0;">Add Step</button>
+      </div>
+    </div>
+
+    <div id="daily-steps-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>Summary</h2>
+    <div class="stats" id="daily-stats"></div>
+  </div>
+
+  <div class="filter-bar">
+    <span style="flex:1; align-self:center; font-size:12.5px; color:var(--text-muted);">All saved day logs below</span>
+    <button class="btn btn-ghost btn-sm" id="btn-export-daily">Export CSV</button>
+  </div>
+
+  <div id="daily-logs-container"></div>
+
+  <footer class="danger-zone">
+    <button id="btn-clear-daily">Clear all day logs</button>
+  </footer>
+</div>
+
+<dialog id="export-dialog">
+  <div class="dialog-inner">
+    <h3>Export as CSV</h3>
+    <p style="font-size:12.5px; color:var(--text-muted); margin-top:-6px;">Select all and copy, then paste into your workflow matrix.</p>
+    <textarea id="export-text" readonly onclick="this.select()"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="btn-copy">Copy to Clipboard</button>
+      <button class="btn btn-ghost" id="btn-close-export">Close</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const STORAGE_KEY = 'periop-workflow-log-entries';
+  const PHASE_ORDER = ['Pre-op Assessment', 'Day-of-Surgery / Holding', 'Intraoperative', 'PACU Handoff', 'Post-op Rounding', 'Other'];
+  const collapsedState = {};
+  let editingId = null;
+
+  function loadEntries() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch (e) { return []; }
+  }
+  function saveEntries(entries) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1600);
+  }
+
+  const painCheckbox = document.getElementById('f-pain');
+  const painNoteWrap = document.getElementById('pain-note-wrap');
+  painCheckbox.addEventListener('change', () => {
+    painNoteWrap.style.display = painCheckbox.checked ? 'block' : 'none';
+  });
+
+  const screenInput = document.getElementById('f-screen');
+  document.querySelectorAll('#system-chips .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const val = chip.dataset.val;
+      screenInput.value = val;
+      document.querySelectorAll('#system-chips .chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      screenInput.focus();
+    });
+  });
+  screenInput.addEventListener('input', () => {
+    document.querySelectorAll('#system-chips .chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.val === screenInput.value);
+    });
+  });
+
+  function resetForm() {
+    document.getElementById('f-phase').selectedIndex = 0;
+    document.getElementById('f-step').value = '';
+    document.getElementById('f-screen').value = '';
+    document.getElementById('f-data').value = '';
+    painCheckbox.checked = false;
+    document.getElementById('f-painnote').value = '';
+    painNoteWrap.style.display = 'none';
+    document.querySelectorAll('#system-chips .chip').forEach(c => c.classList.remove('active'));
+    editingId = null;
+    document.getElementById('form-title').textContent = 'Log an Entry';
+    document.getElementById('form-buttons').innerHTML = '<button class="btn btn-primary" id="btn-add" style="margin-top:0;">Add Entry</button>';
+    document.getElementById('btn-add').addEventListener('click', handleAdd);
+    // note: case type intentionally not reset, so it carries over between entries in the same case
+  }
+
+  function handleAdd() {
+    const phase = document.getElementById('f-phase').value;
+    const step = document.getElementById('f-step').value.trim();
+    const screen = document.getElementById('f-screen').value.trim();
+    const data = document.getElementById('f-data').value.trim();
+    const caseType = document.getElementById('f-casetype').value.trim();
+    const pain = painCheckbox.checked;
+    const painNote = document.getElementById('f-painnote').value.trim();
+
+    if (!step) {
+      showToast('Add a step/action first');
+      document.getElementById('f-step').focus();
+      return;
+    }
+
+    let entries = loadEntries();
+
+    if (editingId) {
+      entries = entries.map(e => e.id === editingId ? {
+        ...e, phase, step, screen, data, caseType, pain, painNote,
+      } : e);
+      showToast('Entry updated');
+    } else {
+      entries.push({
+        id: uid(), phase, step, screen, data, caseType, pain, painNote,
+        timestamp: new Date().toISOString(),
+      });
+      showToast('Entry added');
+    }
+    saveEntries(entries);
+    resetForm();
+    render();
+  }
+
+  function handleEdit(id) {
+    const entries = loadEntries();
+    const e = entries.find(x => x.id === id);
+    if (!e) return;
+    editingId = id;
+    document.getElementById('f-phase').value = e.phase;
+    document.getElementById('f-casetype').value = e.caseType || '';
+    document.getElementById('f-step').value = e.step;
+    document.getElementById('f-screen').value = e.screen || '';
+    document.querySelectorAll('#system-chips .chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.val === (e.screen || ''));
+    });
+    document.getElementById('f-data').value = e.data || '';
+    painCheckbox.checked = e.pain;
+    painNoteWrap.style.display = e.pain ? 'block' : 'none';
+    document.getElementById('f-painnote').value = e.painNote || '';
+    document.getElementById('form-title').textContent = 'Edit Entry';
+    document.getElementById('form-buttons').innerHTML =
+      '<button class="btn btn-primary" id="btn-add" style="margin-top:0;">Update Entry</button>' +
+      '<button class="btn btn-secondary" id="btn-cancel-edit">Cancel</button>';
+    document.getElementById('btn-add').addEventListener('click', handleAdd);
+    document.getElementById('btn-cancel-edit').addEventListener('click', resetForm);
+    document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function handleDelete(id) {
+    if (!confirm('Delete this entry?')) return;
+    let entries = loadEntries();
+    entries = entries.filter(e => e.id !== id);
+    saveEntries(entries);
+    showToast('Entry deleted');
+    render();
+  }
+
+  function fmtTime(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' +
+           d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  }
+
+  function renderStats(entries) {
+    const statsEl = document.getElementById('stats');
+    const total = entries.length;
+    const painCount = entries.filter(e => e.pain).length;
+    let html = `<span class="stat-chip">${total} total ${total === 1 ? 'entry' : 'entries'}</span>`;
+    PHASE_ORDER.forEach(p => {
+      const c = entries.filter(e => e.phase === p).length;
+      if (c > 0) html += `<span class="stat-chip">${p}: ${c}</span>`;
+    });
+    if (painCount > 0) html += `<span class="stat-chip warn">${painCount} pain point${painCount === 1 ? '' : 's'} flagged</span>`;
+    statsEl.innerHTML = html;
+  }
+
+  function render() {
+    const entries = loadEntries();
+    renderStats(entries);
+
+    const filterPhase = document.getElementById('filter-phase').value;
+    const container = document.getElementById('entries-container');
+    container.innerHTML = '';
+
+    if (entries.length === 0) {
+      container.innerHTML = '<div class="empty">No entries yet. Log your first workflow step above.</div>';
+      return;
+    }
+
+    const phasesToShow = filterPhase ? [filterPhase] : PHASE_ORDER;
+    let anyShown = false;
+
+    phasesToShow.forEach(phase => {
+      const phaseEntries = entries
+        .filter(e => e.phase === phase)
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      if (phaseEntries.length === 0) return;
+      anyShown = true;
+
+      const group = document.createElement('div');
+      group.className = 'phase-group';
+
+      const isCollapsed = !!collapsedState[phase];
+      const header = document.createElement('div');
+      header.className = 'phase-header' + (isCollapsed ? ' collapsed' : '');
+      header.innerHTML = `<span class="name">${phase}</span><span><span class="count">${phaseEntries.length}</span> <span class="chevron">&#9660;</span></span>`;
+      header.addEventListener('click', () => {
+        collapsedState[phase] = !collapsedState[phase];
+        render();
+      });
+      group.appendChild(header);
+
+      if (!isCollapsed) {
+        const list = document.createElement('div');
+        phaseEntries.forEach(e => {
+          const div = document.createElement('div');
+          div.className = 'entry' + (e.pain ? ' pain' : '');
+          div.innerHTML = `
+            <div class="row1">
+              <div>
+                <p class="step">${escapeHtml(e.step)}${e.pain ? '<span class="badge">Pain Point</span>' : ''}</p>
+                ${e.screen ? `<p class="meta"><b>System:</b> ${escapeHtml(e.screen)}</p>` : ''}
+                ${e.data ? `<p class="meta"><b>Data:</b> ${escapeHtml(e.data)}</p>` : ''}
+                ${e.caseType ? `<p class="meta"><b>Case:</b> ${escapeHtml(e.caseType)}</p>` : ''}
+                <p class="meta">${fmtTime(e.timestamp)}</p>
+                ${e.pain && e.painNote ? `<p class="pain-note">${escapeHtml(e.painNote)}</p>` : ''}
+              </div>
+              <div class="actions">
+                <button class="icon-btn" title="Edit" onclick="handleEdit('${e.id}')">&#9998;&#65039;</button>
+                <button class="icon-btn" title="Delete" onclick="handleDelete('${e.id}')">&#128465;&#65039;</button>
+              </div>
+            </div>
+          `;
+          list.appendChild(div);
+        });
+        group.appendChild(list);
+      }
+      container.appendChild(group);
+    });
+
+    if (!anyShown) {
+      container.innerHTML = '<div class="empty">No entries for this phase yet.</div>';
+    }
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function csvEscape(val) {
+    if (val == null) return '';
+    const s = String(val);
+    if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function buildCsv() {
+    const entries = loadEntries().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const header = ['Phase', 'Case Type', 'Step / Action', 'System / Tool Used', 'Data Captured', 'Pain Point', 'Pain Point Note', 'Timestamp'];
+    const rows = entries.map(e => [
+      e.phase, e.caseType || '', e.step, e.screen || '', e.data || '',
+      e.pain ? 'Yes' : 'No', e.painNote || '', e.timestamp
+    ]);
+    return [header, ...rows].map(r => r.map(csvEscape).join(',')).join('\n');
+  }
+
+  document.getElementById('btn-add').addEventListener('click', handleAdd);
+  document.getElementById('filter-phase').addEventListener('change', render);
+
+  document.getElementById('btn-export').addEventListener('click', () => {
+    document.getElementById('export-text').value = buildCsv();
+    document.getElementById('export-dialog').showModal();
+  });
+  document.getElementById('btn-close-export').addEventListener('click', () => {
+    document.getElementById('export-dialog').close();
+  });
+  document.getElementById('btn-copy').addEventListener('click', () => {
+    const ta = document.getElementById('export-text');
+    ta.select();
+    try {
+      document.execCommand('copy');
+      showToast('Copied to clipboard');
+    } catch (e) {
+      showToast('Select all & copy manually');
+    }
+  });
+
+  document.getElementById('btn-clear').addEventListener('click', () => {
+    if (!confirm('Delete ALL logged entries? This cannot be undone.')) return;
+    if (!confirm('Are you sure? This will permanently erase your workflow log.')) return;
+    saveEntries([]);
+    showToast('All entries cleared');
+    render();
+  });
+
+  render();
+
+  /* ===================== Daily List Flow tab ===================== */
+
+  const STORAGE_DAILY_KEY = 'periop-daily-flow-logs';
+  const ACTIVE_DAILY_KEY = 'periop-daily-flow-active-id';
+  const dailyLogsCollapsed = {};
+  let editingStepId = null;
+
+  function loadDailyLogs() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_DAILY_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function saveDailyLogs(logs) {
+    localStorage.setItem(STORAGE_DAILY_KEY, JSON.stringify(logs));
+  }
+  function getActiveDailyId() { return localStorage.getItem(ACTIVE_DAILY_KEY) || null; }
+  function setActiveDailyId(id) {
+    if (id) localStorage.setItem(ACTIVE_DAILY_KEY, id);
+    else localStorage.removeItem(ACTIVE_DAILY_KEY);
+  }
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function fmtDate(dateStr) {
+    if (!dateStr) return 'Undated';
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d)) return dateStr;
+    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  const dailyPainCheckbox = document.getElementById('dl-step-pain');
+  const dailyPainNoteWrap = document.getElementById('dl-pain-note-wrap');
+  dailyPainCheckbox.addEventListener('change', () => {
+    dailyPainNoteWrap.style.display = dailyPainCheckbox.checked ? 'block' : 'none';
+  });
+
+  const dailySystemInput = document.getElementById('dl-step-system');
+  document.querySelectorAll('#daily-system-chips .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      dailySystemInput.value = chip.dataset.val;
+      document.querySelectorAll('#daily-system-chips .chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      dailySystemInput.focus();
+    });
+  });
+  dailySystemInput.addEventListener('input', () => {
+    document.querySelectorAll('#daily-system-chips .chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.val === dailySystemInput.value);
+    });
+  });
+
+  function resetDailyStepForm() {
+    document.getElementById('dl-step-text').value = '';
+    document.getElementById('dl-step-system').value = '';
+    document.querySelectorAll('#daily-system-chips .chip').forEach(c => c.classList.remove('active'));
+    dailyPainCheckbox.checked = false;
+    document.getElementById('dl-step-painnote').value = '';
+    dailyPainNoteWrap.style.display = 'none';
+    editingStepId = null;
+    document.getElementById('daily-form-title').textContent = 'Add a Step';
+    document.getElementById('daily-form-buttons').innerHTML = '<button class="btn btn-primary" id="btn-add-step" style="margin-top:0;">Add Step</button>';
+    document.getElementById('btn-add-step').addEventListener('click', handleAddStep);
+  }
+
+  function handleStartDailyLog() {
+    const date = document.getElementById('dl-date').value || todayStr();
+    const label = document.getElementById('dl-label').value.trim();
+    const logs = loadDailyLogs();
+    const newLog = { id: uid(), date, label, steps: [] };
+    logs.push(newLog);
+    saveDailyLogs(logs);
+    setActiveDailyId(newLog.id);
+    showToast('Day log started');
+    renderDailyTab();
+  }
+
+  function handleEditDailyMeta() {
+    const logs = loadDailyLogs();
+    const active = logs.find(l => l.id === getActiveDailyId());
+    if (!active) return;
+    const newDate = prompt('Date (YYYY-MM-DD):', active.date);
+    if (newDate === null) return;
+    const newLabel = prompt('List / Case Type:', active.label || '');
+    if (newLabel === null) return;
+    active.date = newDate.trim() || active.date;
+    active.label = newLabel.trim();
+    saveDailyLogs(logs);
+    renderDailyTab();
+  }
+
+  function handleAddStep() {
+    const text = document.getElementById('dl-step-text').value.trim();
+    const system = document.getElementById('dl-step-system').value.trim();
+    const pain = dailyPainCheckbox.checked;
+    const painNote = document.getElementById('dl-step-painnote').value.trim();
+
+    if (!text) {
+      showToast('Add a step description first');
+      document.getElementById('dl-step-text').focus();
+      return;
+    }
+
+    const logs = loadDailyLogs();
+    const active = logs.find(l => l.id === getActiveDailyId());
+    if (!active) { showToast('Start a day log first'); return; }
+
+    if (editingStepId) {
+      active.steps = active.steps.map(s => s.id === editingStepId ? { ...s, text, system, pain, painNote } : s);
+      showToast('Step updated');
+    } else {
+      active.steps.push({ id: uid(), text, system, pain, painNote });
+      showToast('Step added');
+    }
+    saveDailyLogs(logs);
+    resetDailyStepForm();
+    renderDailyTab();
+  }
+
+  function handleEditStep(stepId) {
+    const logs = loadDailyLogs();
+    const active = logs.find(l => l.id === getActiveDailyId());
+    if (!active) return;
+    const s = active.steps.find(x => x.id === stepId);
+    if (!s) return;
+    editingStepId = stepId;
+    document.getElementById('dl-step-text').value = s.text;
+    document.getElementById('dl-step-system').value = s.system || '';
+    document.querySelectorAll('#daily-system-chips .chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.val === (s.system || ''));
+    });
+    dailyPainCheckbox.checked = s.pain;
+    dailyPainNoteWrap.style.display = s.pain ? 'block' : 'none';
+    document.getElementById('dl-step-painnote').value = s.painNote || '';
+    document.getElementById('daily-form-title').textContent = 'Edit Step';
+    document.getElementById('daily-form-buttons').innerHTML =
+      '<button class="btn btn-primary" id="btn-add-step" style="margin-top:0;">Update Step</button>' +
+      '<button class="btn btn-secondary" id="btn-cancel-step-edit">Cancel</button>';
+    document.getElementById('btn-add-step').addEventListener('click', handleAddStep);
+    document.getElementById('btn-cancel-step-edit').addEventListener('click', resetDailyStepForm);
+    document.getElementById('daily-entry-form').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function handleDeleteStep(stepId) {
+    if (!confirm('Delete this step?')) return;
+    const logs = loadDailyLogs();
+    const active = logs.find(l => l.id === getActiveDailyId());
+    if (!active) return;
+    active.steps = active.steps.filter(s => s.id !== stepId);
+    saveDailyLogs(logs);
+    showToast('Step deleted');
+    renderDailyTab();
+  }
+
+  function handleMoveStep(stepId, dir) {
+    const logs = loadDailyLogs();
+    const active = logs.find(l => l.id === getActiveDailyId());
+    if (!active) return;
+    const idx = active.steps.findIndex(s => s.id === stepId);
+    const newIdx = idx + dir;
+    if (idx === -1 || newIdx < 0 || newIdx >= active.steps.length) return;
+    const tmp = active.steps[idx];
+    active.steps[idx] = active.steps[newIdx];
+    active.steps[newIdx] = tmp;
+    saveDailyLogs(logs);
+    renderDailyTab();
+  }
+
+  function handleOpenDailyLog(id) {
+    setActiveDailyId(id);
+    resetDailyStepForm();
+    showToast('Day log opened');
+    renderDailyTab();
+  }
+
+  function handleDeleteDailyLog(id) {
+    if (!confirm('Delete this entire day log and all its steps?')) return;
+    let logs = loadDailyLogs();
+    logs = logs.filter(l => l.id !== id);
+    saveDailyLogs(logs);
+    if (getActiveDailyId() === id) setActiveDailyId(null);
+    showToast('Day log deleted');
+    renderDailyTab();
+  }
+
+  function toggleDailyLogCollapse(id) {
+    const isCollapsed = dailyLogsCollapsed[id] === undefined ? true : dailyLogsCollapsed[id];
+    dailyLogsCollapsed[id] = !isCollapsed;
+    renderDailyTab();
+  }
+
+  function renderStepsReadonly(steps) {
+    if (!steps.length) return '<p class="meta" style="margin-top:8px;">No steps logged.</p>';
+    return '<div style="margin-top:10px;">' + steps.map((s, i) => `
+      <div class="step-row ${s.pain ? 'pain' : ''}" style="margin-bottom:6px;">
+        <div class="step-num">${i + 1}</div>
+        <div class="step-body">
+          <p class="step-text" style="font-size:13px;">${escapeHtml(s.text)}${s.pain ? '<span class="badge">Pain Point</span>' : ''}</p>
+          ${s.system ? `<p class="meta"><b>Source:</b> ${escapeHtml(s.system)}</p>` : ''}
+          ${s.pain && s.painNote ? `<p class="pain-note">${escapeHtml(s.painNote)}</p>` : ''}
+        </div>
+      </div>
+    `).join('') + '</div>';
+  }
+
+  function renderDailyActiveCard(logs, active) {
+    const card = document.getElementById('daily-active-card');
+    if (!active) {
+      card.innerHTML = `
+        <h2>Start a Day Log</h2>
+        <label for="dl-date">Date</label>
+        <input type="date" id="dl-date" value="${todayStr()}">
+        <label for="dl-label">List / Case Type</label>
+        <input type="text" id="dl-label" placeholder="e.g. Elective General AM List">
+        <button class="btn btn-primary" id="btn-start-daily" type="button">Start Day Log</button>
+      `;
+      document.getElementById('btn-start-daily').addEventListener('click', handleStartDailyLog);
+      document.getElementById('daily-entry-form').style.display = 'none';
+    } else {
+      card.innerHTML = `
+        <div class="log-card-header" style="cursor:default;">
+          <div>
+            <div class="title">${fmtDate(active.date)}</div>
+            <div class="log-summary">${escapeHtml(active.label || 'Untitled list')} &middot; ${active.steps.length} step(s)</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-switch-daily" type="button">Switch / New</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost btn-sm" id="btn-edit-daily-meta" type="button" style="width:100%;">Edit date / label</button>
+        </div>
+      `;
+      document.getElementById('btn-switch-daily').addEventListener('click', () => {
+        setActiveDailyId(null);
+        renderDailyTab();
+      });
+      document.getElementById('btn-edit-daily-meta').addEventListener('click', handleEditDailyMeta);
+      document.getElementById('daily-entry-form').style.display = '';
+    }
+  }
+
+  function renderDailyStats(logs) {
+    const totalLogs = logs.length;
+    const totalSteps = logs.reduce((sum, l) => sum + l.steps.length, 0);
+    const painSteps = logs.reduce((sum, l) => sum + l.steps.filter(s => s.pain).length, 0);
+    let html = `<span class="stat-chip">${totalLogs} day log${totalLogs === 1 ? '' : 's'}</span><span class="stat-chip">${totalSteps} total step${totalSteps === 1 ? '' : 's'}</span>`;
+    if (painSteps > 0) html += `<span class="stat-chip warn">${painSteps} pain point${painSteps === 1 ? '' : 's'} flagged</span>`;
+    document.getElementById('daily-stats').innerHTML = html;
+  }
+
+  function renderDailyLogsList(logs, activeId) {
+    const container = document.getElementById('daily-logs-container');
+    container.innerHTML = '';
+    if (logs.length === 0) {
+      container.innerHTML = '<div class="empty">No day logs saved yet.</div>';
+      return;
+    }
+    const sorted = [...logs].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    sorted.forEach(l => {
+      const isCollapsed = dailyLogsCollapsed[l.id] === undefined ? true : dailyLogsCollapsed[l.id];
+      const isActive = l.id === activeId;
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <div class="log-card-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleDailyLogCollapse('${l.id}')">
+          <div>
+            <div class="title">${fmtDate(l.date)} ${isActive ? '<span class="badge" style="background:var(--teal-light); color:var(--teal-dark);">Active</span>' : ''}</div>
+            <div class="log-summary">${escapeHtml(l.label || 'Untitled list')} &middot; ${l.steps.length} step(s)</div>
+          </div>
+          <span class="chevron">&#9660;</span>
+        </div>
+        ${!isCollapsed ? renderStepsReadonly(l.steps) : ''}
+        <div class="btn-row">
+          <button class="btn btn-secondary btn-sm" onclick="handleOpenDailyLog('${l.id}')" ${isActive ? 'disabled' : ''}>${isActive ? 'Currently Open' : 'Open to Edit'}</button>
+          <button class="btn btn-danger btn-sm" onclick="handleDeleteDailyLog('${l.id}')">Delete</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function renderDailyTab() {
+    const logs = loadDailyLogs();
+    let activeId = getActiveDailyId();
+    let active = logs.find(l => l.id === activeId) || null;
+    if (activeId && !active) { setActiveDailyId(null); activeId = null; }
+
+    renderDailyActiveCard(logs, active);
+    renderStepsList: {
+      const container = document.getElementById('daily-steps-list');
+      if (active) {
+        container.innerHTML = active.steps.length ? '' : '<div class="empty">No steps logged for this day yet. Add the first step above.</div>';
+        if (active.steps.length) {
+          active.steps.forEach((s, i) => {
+            const div = document.createElement('div');
+            div.className = 'step-row' + (s.pain ? ' pain' : '');
+            div.innerHTML = `
+              <div class="step-num">${i + 1}</div>
+              <div class="step-body">
+                <p class="step-text">${escapeHtml(s.text)}${s.pain ? '<span class="badge">Pain Point</span>' : ''}</p>
+                ${s.system ? `<p class="meta"><b>Source:</b> ${escapeHtml(s.system)}</p>` : ''}
+                ${s.pain && s.painNote ? `<p class="pain-note">${escapeHtml(s.painNote)}</p>` : ''}
+              </div>
+              <div class="step-controls">
+                <div class="step-controls-row">
+                  <button class="icon-btn" title="Move up" onclick="handleMoveStep('${s.id}', -1)">&#8593;</button>
+                  <button class="icon-btn" title="Move down" onclick="handleMoveStep('${s.id}', 1)">&#8595;</button>
+                </div>
+                <div class="step-controls-row">
+                  <button class="icon-btn" title="Edit" onclick="handleEditStep('${s.id}')">&#9998;&#65039;</button>
+                  <button class="icon-btn" title="Delete" onclick="handleDeleteStep('${s.id}')">&#128465;&#65039;</button>
+                </div>
+              </div>
+            `;
+            container.appendChild(div);
+          });
+        }
+      } else {
+        container.innerHTML = '';
+      }
+    }
+    renderDailyStats(logs);
+    renderDailyLogsList(logs, activeId);
+  }
+
+  function buildDailyCsv() {
+    const logs = [...loadDailyLogs()].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    const header = ['Date', 'List / Case Type', 'Step Order', 'Step', 'System / Source', 'Pain Point', 'Pain Point Note'];
+    const rows = [];
+    logs.forEach(l => {
+      l.steps.forEach((s, i) => {
+        rows.push([l.date, l.label || '', i + 1, s.text, s.system || '', s.pain ? 'Yes' : 'No', s.painNote || '']);
+      });
+    });
+    return [header, ...rows].map(r => r.map(csvEscape).join(',')).join('\n');
+  }
+
+  document.getElementById('btn-export-daily').addEventListener('click', () => {
+    document.getElementById('export-text').value = buildDailyCsv();
+    document.getElementById('export-dialog').showModal();
+  });
+
+  document.getElementById('btn-clear-daily').addEventListener('click', () => {
+    if (!confirm('Delete ALL day logs? This cannot be undone.')) return;
+    if (!confirm('Are you sure? This will permanently erase all day/list flow logs.')) return;
+    saveDailyLogs([]);
+    setActiveDailyId(null);
+    showToast('All day logs cleared');
+    renderDailyTab();
+  });
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      document.getElementById('tab-case').style.display = tab === 'case' ? '' : 'none';
+      document.getElementById('tab-daily').style.display = tab === 'daily' ? '' : 'none';
+      if (tab === 'daily') renderDailyTab();
+    });
+  });
+
+  renderDailyTab();
+</script>
+</body>
+</html>
